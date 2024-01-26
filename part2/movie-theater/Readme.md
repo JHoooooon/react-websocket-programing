@@ -37,7 +37,6 @@ export const seats = [
 `server/server.js`
 
 ```js
-
 import { Server } from "socket.io";
 import { seats } from "./data.js";
 
@@ -102,23 +101,23 @@ const setSeats = (roomNumber, seat) => {
 };
 
 // io 서버 연결
-io.on('connection', (socket) => {
-  // join 이벤트 생성 
-  socket.on('join', (movie) => {
+io.on("connection", (socket) => {
+  // join 이벤트 생성
+  socket.on("join", (movie) => {
     // movie 인자의 room 생성
     socket.join(movie);
     // 임시 배열 생성
     let tempSeat = [];
     // movie 가 1 이면 임시배열은 avatar
-    if (movie === '1')  {
+    if (movie === "1") {
       tempSeat = avatar;
     }
     // movie 가 2 이면 임시배열은 antman
-    if (movie === '2')  {
+    if (movie === "2") {
       tempSeat = antman;
     }
     // movie 가 3 이면 임시배열은 cats
-    if (movie === '3')  {
+    if (movie === "3") {
       tempSeat = cats;
     }
     // movie 룸에 속한 모든 socket 유저에게
@@ -141,8 +140,7 @@ io.on('connection', (socket) => {
     // 로그아웃 로그 출력
     console.log("logout");
   });
-})
-
+});
 ```
 
 `client/src/seatContainer`
@@ -270,13 +268,11 @@ const SeatContainer = () => {
 };
 
 export default SeatContainer;
-
 ```
 
 `client/src/containers/homeContainer`
 
 ```tsx
-
 import classNames from "classnames";
 import styles from "./HomeContainer.module.css";
 import { Link } from "react-router-dom";
@@ -323,14 +319,12 @@ const HomeContainer = () => {
 };
 
 export default HomeContainer;
-
 ```
 
 이렇게 각 컨테이너 환경을 만든다.
 만든 컨테이너를 `APP.tsx` 에 할당한다
 
 ```tsx
-
 import HomeContainer from "./containers/homeContainer/HomeContainer";
 import SeatContainer from "./containers/seatContainer/SeatContainer";
 import "./App.css";
@@ -348,34 +342,31 @@ function App() {
 }
 
 export default App;
-
 ```
 
 이렇게 해서 만들어본다.
 그런데 문제가 생겼다. 동작이 이상하다.
 
 `SeatContainer` 에 진입하면, `server` 에서 `logout` 콘솔이 찍힌다.
-그래서 `HomeConatiner` 의 `useEffect` 와 `SeatContainer` 의  `useEffect` 를  
+그래서 `HomeConatiner` 의 `useEffect` 와 `SeatContainer` 의 `useEffect` 를  
 다시 살펴봤다...
 
 ```ts
+// HomeContainer
+useEffect(() => {
+  // 해당 페이지 진입시 rsv_sock 연결
+  rsv_sock.connect();
+}, []);
 
-  // HomeContainer
-  useEffect(() => {
-    // 해당 페이지 진입시 rsv_sock 연결
-    rsv_sock.connect();
-  }, []);
-
-  // SeatContainer
-  useEffect(() => {
-    // join 이벤트에 메시지 전달
-    rsv_sock.emit("join", id);
-    return () => {
-      // 해당 컨테이너 unmount 시 삭제
-      rsv_sock.disconnect();
-    };
-  }, [id]);
-
+// SeatContainer
+useEffect(() => {
+  // join 이벤트에 메시지 전달
+  rsv_sock.emit("join", id);
+  return () => {
+    // 해당 컨테이너 unmount 시 삭제
+    rsv_sock.disconnect();
+  };
+}, [id]);
 ```
 
 지금 이 코드에서 문제가 생긴다.
@@ -387,7 +378,7 @@ export default App;
 
 배열로 `seat` 를 찍어보아도, `[]` 이라는 결과값이 나온다.
 
-내 생각을 적어보면, 원래 ***해당 페이지에 진입시 소켓이 연결되게끔*** 하기  
+내 생각을 적어보면, 원래 **_해당 페이지에 진입시 소켓이 연결되게끔_** 하기  
 위해서라면, `SeatContainer` 에서 `connection` 및 `disConnect` 를 해주는것이  
 맞기는하다.
 
@@ -397,7 +388,7 @@ export default App;
 하지만 `SeatContainer` 로 페이지 전환시 바로 `logout` 되는 상황이 발생했다.
 혹시 `page` 전환시에 `socket` 이 유지 되지 않는가?
 
-***문제점 분석***
+**_문제점 분석_**
 
 1. `HomeContainer` 진입시 소켓연결 되는가 ? `Y`
 2. `SeatContainer` 진입시 소켓연결이 유지 되는가 ? `Y`
@@ -416,16 +407,15 @@ export default App;
 
 이상하다. 왜 `HomeContainer` 로 페이지 전환시 뒤 늦게 보내주지?
 
-1. 비동기 문제인가?
+비동기 문제인가?
 
 그래서 `Asnyc` 로 감싸고 처리해본다.
 
 `client/src/container/seatContainer`
 
 ```tsx
-
-  useEffect(() => {
-    (async () => {
+useEffect(() => {
+  (async () => {
     // join 이벤트에 메시지 전달
     // rsv_sock.connect();
     await rsv_sock.emit("join", id);
@@ -433,9 +423,8 @@ export default App;
       // 해당 컨테이너 unmount 시 삭제
       rsv_sock.disconnect();
     };
-    })();
-  }, [id]);
-
+  })();
+}, [id]);
 ```
 
 제대로 작동은 한다.
@@ -454,7 +443,7 @@ export default App;
 `client/src/container/seatContainer`
 
 ```tsx
-useEffect(() => 
+useEffect(() =>
   // join 이벤트에 메시지 전달
   // rsv_sock.connect();
   rsv_sock.emit("join", id);
@@ -482,21 +471,20 @@ useEffect(() =>
 
 1. `strict` 모드에 의해 2번 렌더링 된다
 2. `첫번째 렌더링시` 에 `emit` 이후 `cleanup` 함수가 실행되면  
-`socket.disconnect` 가 된다
+   `socket.disconnect` 가 된다
 3. `두번째 렌더링시` 에 `disconnection 된 socket` 에서 `emit` 을 하므로 동작하지  
-않는다.
+   않는다.
 4. `HomeComponent` 로 페이지 전환시, 다시 `socket.connect` 가 이루어지므로,  
-`SeatContainer` 에서 `emit` 한 `data` 를 이때 받는다.
+   `SeatContainer` 에서 `emit` 한 `data` 를 이때 받는다.
 
 > 이러한 이유로인해 `HomeComponent` 상의 네트워크 탭에서 `sSeatmessage` 의  
-결과를 받아볼 수 있는것 같다
+> 결과를 받아볼 수 있는것 같다
 >
 > `socket.io` 에서는 재연결시 기존의 `socket.id` 를 유지하고 있기 때문에 식별하고  
-데이터를 보내주는듯 하다.
+> 데이터를 보내주는듯 하다.
 >
 > 이는 `reconnectionDelay` 옵션을 사용하여, 해당 `delay` 동안 `socket.id` 를  
-유지한다.
->
+> 유지한다.
 
 자.. 이 모든 잘못은 내가 `strictMode` 를 유지하고있었기 때문에 생긴 혼란이다.
 그런데, 나는 `strictMode` 는 그냥 쓰고싶다.
@@ -505,14 +493,13 @@ useEffect(() =>
 한다.
 
 - `IIFE` 를 사용하여 처리한다
-이 부분은, 아직도 동작원리가 이해가 안간다. 동작되는 로직은 동일할거 같은데,  
-`IIFE` 로 처리하면 된다... 심지어 비동기로직도 아니고 동기로직인데 된다...
-왜 되지? 일단 코드로 남겨둔다.
+  이 부분은, 아직도 동작원리가 이해가 안간다. 동작되는 로직은 동일할거 같은데,  
+  `IIFE` 로 처리하면 된다... 심지어 비동기로직도 아니고 동기로직인데 된다...
+  왜 되지? 일단 코드로 남겨둔다.
 
 ```tsx
-
-  useEffect(() => {
-    (() => {
+useEffect(() => {
+  (() => {
     // join 이벤트에 메시지 전달
     // rsv_sock.connect();
     rsv_sock.emit("join", id);
@@ -520,9 +507,8 @@ useEffect(() =>
       // 해당 컨테이너 unmount 시 삭제
       rsv_sock.disconnect();
     };
-    })();
-  }, [id]);
-
+  })();
+}, [id]);
 ```
 
 > 이게 왜 되지? `IIFE` 로 감싸지 않으면 안된다...
@@ -531,19 +517,19 @@ useEffect(() =>
 >
 > 뭔가 콜백을 호출하는 타이밍과 연관이 있나 추축할 뿐이다...
 > 해당 문제에 대해서 알려주는 내용을 아직은 찾지 못했다
-<br/>
+> <br/>
 
 - 책에서처럼 `StrictMode` 를 제거하는것이다  
-처음에 왜 제거하나 싶었는데.. 이것 때문인듯 하다..
-이건 별로 하고싶지는 않다..
-<br/>
+  처음에 왜 제거하나 싶었는데.. 이것 때문인듯 하다..
+  이건 별로 하고싶지는 않다..
+  <br/>
 
 - 다른 방법은 `socket.io` 의 [use-with-react disconnection](https://socket.io/how-to/use-with-react#disconnection) 내용이다
-이는 `react` 사용시 현재 발생한 문제에 대해서 다루고 있다.
-대략적으로 정리하면 `StrictMode` 는 개발하는동안 `bugs` 를 잡기위해 `2번` 실행  
-한다는 내용이다.  
-그러므로, 어플리케이션의 각 부분마다 `connection` 이 필요하다면 다음처럼 하라고  
-설명한다.
+  이는 `react` 사용시 현재 발생한 문제에 대해서 다루고 있다.
+  대략적으로 정리하면 `StrictMode` 는 개발하는동안 `bugs` 를 잡기위해 `2번` 실행  
+  한다는 내용이다.  
+  그러므로, 어플리케이션의 각 부분마다 `connection` 이 필요하다면 다음처럼 하라고  
+  설명한다.
 
 ```tsx
 useEffect(() => {
@@ -554,14 +540,32 @@ useEffect(() => {
     socket.disconnect();
   };
 }, []);
-
 ```
 
 > 책과는 약간 다르게 알려준다.
-사실 나도 보면서 왜 책에서는 `connection` 을 다른 컴포넌트에서 할까?  
-싶은 생각도 들었다....
+> 사실 나도 보면서 왜 책에서는 `connection` 을 다른 컴포넌트에서 할까?  
+> 싶은 생각도 들었다....
 >
 > 뭐.. 어떻게 개발하느냐에 따라 다르겠지...
 
 일단 코드를 `docs` 에 나온대로 처리한다.
-별 상관이 없을듯싶다. 어차피 `url` 의 `parmas` 에서 `id` 와 `title` 을 가져온다.
+단, 책에서 나온대로 `HomeContainer` 에서 `socket` 연결하고,  
+`sockets.disconnected` 를 사용하여 `connect` 되지 않았으면,  
+`socket` 을 재연결하는 로직만 넣는다.
+
+```tsx
+useEffect(() => {
+  // disconnected 되면 재연결
+  if (rsv_sock.disconnected) {
+    rsv_sock.connect();
+  }
+  rsv_sock.emit("join", id);
+  return () => {
+    console.log("컴포넌트 언마운트?");
+    // 해당 컨테이너 unmount 시 삭제
+    rsv_sock.disconnect();
+  };
+}, [id]);
+```
+
+제대로 동작한다.
